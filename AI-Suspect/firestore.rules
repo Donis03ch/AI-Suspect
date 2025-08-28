@@ -1,0 +1,34 @@
+
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Rules for game rooms
+    match /rooms/{roomId} {
+      // Anyone who is authenticated can read any room.
+      // This is necessary for joining rooms and for real-time updates.
+      allow read: if request.auth != null;
+
+      // An authenticated user can create a new room.
+      allow create: if request.auth != null;
+
+      // An authenticated user can update a room.
+      // This is needed for joining, leaving, answering, and voting.
+      // In a production app, you would add more specific checks.
+      allow update: if request.auth != null;
+
+      // Only the host of the room can delete it.
+      allow delete: if request.auth != null && resource.data.hostUid == request.auth.uid;
+    }
+
+    // Rules for storing human answers for the AI to learn from
+    match /humanStyleAnswers/{answerId} {
+      // Anyone authenticated can read these answers.
+      // This is used by the client to fetch examples for the AI prompt.
+      allow read, create: if request.auth != null;
+
+      // No one can update or delete old answers.
+      allow update, delete: if false;
+    }
+  }
+}
